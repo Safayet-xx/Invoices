@@ -1,0 +1,18 @@
+.invoice-card {
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease-in-out;
+  }
+  
+  .invoice-card:hover {
+    transform: scale(1.05);
+  }
+  
+  .no-invoice-wrapper {
+    margin-top: 50px;
+  }
+  
+  .no-invoice-wrapper .btn {
+    font-size: 1.1rem;
+    padding: 10px 20px;
+  }
+  

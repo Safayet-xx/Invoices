@@ -1,0 +1,121 @@
+/* General Wrapper */
+.dashboard-wrapper {
+    display: flex;
+    min-height: 100vh;
+    position: relative;
+}
+
+/* Sidebar */
+.side-nav {
+    width: 250px;
+    background-color: #282c34;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 20px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    overflow-y: auto;
+    transition: transform 0.3s ease;
+    border-radius: 10px 0 0 10px; /* Rounded corners */
+}
+
+.side-nav.closed {
+    transform: translateX(-250px);
+}
+
+.side-nav.open {
+    transform: translateX(0);
+}
+
+/* Profile Section */
+.profile-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.profile-img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    margin-bottom: 10px;
+}
+
+.profile-details {
+    text-align: center;
+}
+
+.company-name {
+    font-weight: bold;
+    font-size: 18px;
+    color: #fff;
+}
+
+/* Navigation Links */
+.menu-link {
+    color: white;
+    text-decoration: none;
+    padding: 10px 15px;
+    margin: 5px 0;
+    border-radius: 5px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background-color 0.3s ease;
+}
+
+.menu-link:hover,
+.menu-link.active {
+    background-color: #5a5aff;
+}
+
+/* Logout Button */
+.logout-section {
+    margin-top: auto;
+    width: 100%;
+    padding: 10px;
+    background-color: red;
+    border-radius: 0 0 10px 10px;
+}
+
+.logout-btn {
+    width: 100%;
+    background-color: red;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+/* Main Content */
+.main-container {
+    margin-left: 250px;
+    padding: 20px;
+    width: calc(100% - 250px);
+    transition: margin-left 0.3s ease;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .side-nav {
+        position: absolute;
+        z-index: 1000;
+    }
+
+    .main-container {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .side-nav.open {
+        transform: translateX(0);
+    }
+}

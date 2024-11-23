@@ -1,49 +1,19 @@
-import React, { useRef, useState } from 'react';
-import axios from 'axios';
+import React, { useState } from 'react';
 import '../login/login.css';
 import { Link, useNavigate } from 'react-router-dom';
 import { auth, db } from '../../firebase';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
+import { IKContext, IKUpload } from 'imagekitio-react';
 
 const Register = () => {
-  const fileInputRef = useRef(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
   const [isLoading, setLoading] = useState(false);
 
   const navigate = useNavigate();
-
-  // Commented out file-related code
-  // const [file, setFile] = useState(null);
-  // const [imageUrl, setImageUrl] = useState(null);
-
-  // Commented out the file selection handler
-  // const onSelectFile = (e) => {
-  //   setFile(e.target.files[0]);
-  //   setImageUrl(URL.createObjectURL(e.target.files[0]));
-  // };
-
-  // Commented out the Cloudinary upload function
-  // const uploadToCloudinary = async (file) => {
-  //   const formData = new FormData();
-  //   formData.append('file', file);
-  //   formData.append('upload_preset', 'yx0r1d81e'); // Replace with your Cloudinary preset
-
-  //   try {
-  //     const response = await axios.post(
-  //       'https://api.cloudinary.com/v1_1/dpqs8cobk/image/upload',
-  //       formData
-  //     );
-  //     const imageUrl = response.data.secure_url;
-  //     console.log('Uploaded Image URL:', imageUrl);
-  //     return imageUrl;
-  //   } catch (error) {
-  //     console.error('Error uploading to Cloudinary:', error);
-  //     throw error;
-  //   }
-  // };
 
   const submitHandler = async (e) => {
     e.preventDefault();
@@ -53,13 +23,10 @@ const Register = () => {
       // Create user in Firebase Auth
       const newUser = await createUserWithEmailAndPassword(auth, email, password);
 
-      // Commented out Cloudinary integration
-      // const uploadedImageUrl = await uploadToCloudinary(file);
-
       // Update user profile in Firebase Auth
       await updateProfile(newUser.user, {
         displayName: displayName,
-        // photoURL: uploadedImageUrl, // Commented out photoURL
+        photoURL: imageUrl, // Assign the uploaded image URL to the profile
       });
 
       // Save user data in Firestore
@@ -67,7 +34,7 @@ const Register = () => {
         uid: newUser.user.uid,
         displayName: displayName,
         email: email,
-        // photoURL: uploadedImageUrl, // Commented out photoURL
+        photoURL: imageUrl, // Save image URL to Firestore
       });
 
       // Navigate to dashboard and save user info in localStorage
@@ -81,6 +48,15 @@ const Register = () => {
       console.error('Error during registration:', error);
       setLoading(false);
     }
+  };
+
+  const onUploadSuccess = (response) => {
+    console.log('Image uploaded successfully:', response.url);
+    setImageUrl(response.url); // Save the uploaded image URL to state
+  };
+
+  const onUploadError = (error) => {
+    console.error('Error uploading image:', error);
   };
 
   return (
@@ -111,23 +87,24 @@ const Register = () => {
               type="password"
               placeholder="Password"
             />
-            {/* File input and preview are commented out */}
-            {/* <input
-              required
-              onChange={onSelectFile}
-              style={{ display: 'none' }}
-              className="login-input"
-              type="file"
-              ref={fileInputRef}
-            />
-            <input
-              required
-              className="login-input"
-              type="button"
-              value="Select Your Logo"
-              onClick={() => fileInputRef.current.click()}
-            />
-            {imageUrl && <img className="image-preview" src={imageUrl} alt="preview" />} */}
+
+            {/* ImageKit Upload Component */}
+            <IKContext
+              publicKey="public_oqQgn8KlbR4og8xmzwk+UIoAKYY="
+              urlEndpoint="https://ik.imagekit.io/ant9lfnrk"
+              authenticationEndpoint="http://localhost:3000/imagekit/auth" // Update with your actual endpoint
+            >
+              <label htmlFor="fileUpload" className="login-input">
+                Upload Your Logo:
+              </label>
+              <IKUpload
+                fileName="logo-upload"
+                onSuccess={onUploadSuccess}
+                onError={onUploadError}
+                className="upload-btn" // Add custom styling if needed
+              />
+            </IKContext>
+
             <button className="login-input login-btn" type="submit">
               {isLoading && <i className="fa-solid fa-spinner fa-spin-pulse"></i>} Submit
             </button>

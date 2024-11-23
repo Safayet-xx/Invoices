@@ -21,9 +21,12 @@ const Login = () => {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
+      // Example: Fetch media URL from your storage or media service
+      const mediaUrl = user.photoURL || 'https://ik.imagekit.io/ant9lfnrk/default-profile.jpg';
+
       // Save user details to localStorage
       localStorage.setItem('cName', user.displayName || 'Anonymous');
-      localStorage.setItem('photoURL', user.photoURL || '');
+      localStorage.setItem('photoURL', mediaUrl);
       localStorage.setItem('email', user.email);
       localStorage.setItem('phoneNumber', user.phoneNumber || '');
       localStorage.setItem('uid', user.uid);

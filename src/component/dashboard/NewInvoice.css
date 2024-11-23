@@ -1,0 +1,89 @@
+.new-invoice-wrapper {
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.main-container {
+    width: 80%;
+    max-width: 1200px;
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.new-invoice-form {
+    margin-top: 20px;
+}
+
+.first-row, .product-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.first-row input, .product-row input {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    width: 100%;
+    max-width: 200px;
+}
+
+.add-btn {
+    padding: 10px 20px;
+    background-color: #5a5aff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.add-btn:hover {
+    background-color: #4a4ad8;
+}
+
+.product-wrapper {
+    margin-top: 30px;
+}
+
+.product-list {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    border-top: 1px solid #ddd;
+}
+
+.product-list.header {
+    font-weight: bold;
+    background-color: #f1f1f1;
+}
+
+.total-wrapper {
+    text-align: right;
+    margin-top: 20px;
+    font-size: 18px;
+}
+.delete-btn {
+    background-color: #ff4d4f; /* Red background */
+    color: white; /* White text color */
+    border: none; /* Remove border */
+    border-radius: 5px; /* Rounded edges */
+    padding: 5px 10px; /* Padding for the button */
+    cursor: pointer; /* Pointer cursor on hover */
+    font-size: 14px; /* Font size */
+    transition: background-color 0.3s ease; /* Smooth transition for hover effect */
+  }
+  
+  .delete-btn:hover {
+    background-color: #d9363e; /* Darker red on hover */
+  }
+  
