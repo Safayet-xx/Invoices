@@ -18,4 +18,20 @@
     background-color: #e0a800;
     border-color: #d39e00;
   }
+  @media print {
+    .no-print {
+      display: none !important;
+    }
+  }
+  
+  @media print {
+    .no-print {
+      display: none !important;
+    }
+  
+    body {
+      margin: 0;
+      padding: 0;
+    }
+  }
   

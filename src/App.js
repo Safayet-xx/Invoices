@@ -1,5 +1,7 @@
 import { RouterProvider, createBrowserRouter } from 'react-router-dom';
 import './App.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import Login from './component/login/Login';
 import Register from './component/register/Register';
 import Dashboard from './component/dashboard/Dashboard';
@@ -9,6 +11,7 @@ import NewInvoice from './component/dashboard/NewInvoice';
 import Setting from './component/dashboard/Setting';
 import InvoiceDetail from './component/dashboard/InvoiceDetail';
 import Profile from './component/dashboard/Profile';
+
 
 function App() {
   const myRouter = createBrowserRouter([

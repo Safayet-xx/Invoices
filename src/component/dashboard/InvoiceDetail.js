@@ -1,16 +1,39 @@
-import React from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const InvoiceDetails = () => {
-  const location = useLocation();
   const navigate = useNavigate();
-  const { state: invoice } = location;
+  const location = useLocation();
+  const [profile, setProfile] = useState({
+    companyName: '',
+    email: '',
+    phone: '',
+    address: '',
+    logo: '',
+  });
+  const invoice = location.state;
+
+  useEffect(() => {
+    // Fetch profile details from localStorage
+    const companyName = localStorage.getItem('cName');
+    const email = localStorage.getItem('email');
+    const phone = localStorage.getItem('phone');
+    const address = localStorage.getItem('address');
+    const logo = localStorage.getItem('photoURL');
+
+    setProfile({ companyName, email, phone, address, logo });
+  }, []);
 
   if (!invoice) {
     return (
       <div className="container my-5 text-center">
         <h3>No invoice details found.</h3>
-        <button className="btn btn-primary mt-3" onClick={() => navigate('/dashboard/invoices')}>
+        <button
+          className="btn btn-primary mt-3"
+          onClick={() => navigate('/dashboard/invoices')}
+        >
           Go Back to Invoices
         </button>
       </div>
@@ -18,61 +41,82 @@ const InvoiceDetails = () => {
   }
 
   const handleExportToPDF = () => {
-    alert('Export to PDF functionality goes here.');
-    // Example: Use jsPDF or any library to generate a PDF from the invoice details
+    const content = document.getElementById('invoice-content');
+    html2canvas(content, { useCORS: true }).then((canvas) => {
+      const imageData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'pt',
+        format: 'a4',
+      });
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+      pdf.addImage(imageData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`invoice-${new Date().toISOString().split('T')[0]}.pdf`);
+    });
   };
 
   const handlePrint = () => {
+    const printContent = document.getElementById('invoice-content');
+    const originalContent = document.body.innerHTML;
+
+    document.body.innerHTML = printContent.innerHTML;
     window.print();
-  };
-
-  const handleEdit = () => {
-    navigate('/dashboard/new-invoice', { state: invoice });
-  };
-
-  const handleDelete = () => {
-    const isSure = window.confirm('Are you sure you want to delete this invoice?');
-    if (isSure) {
-      // Placeholder for deleting the invoice from Firebase
-      alert('Invoice deleted successfully.');
-      navigate('/dashboard/invoices');
-    }
+    document.body.innerHTML = originalContent;
+    window.location.reload();
   };
 
   return (
     <div className="container my-5">
-      {/* Header Section */}
-      <div className="d-flex justify-content-between align-items-center mb-4">
+      {/* Buttons for Export/Print */}
+      <div className="d-flex justify-content-between align-items-center no-print">
         <h2>Invoice Details</h2>
-        <div className="dropdown">
-          <button
-            className="btn btn-primary dropdown-toggle"
-            type="button"
-            id="dropdownMenuButton1"
-            data-bs-toggle="dropdown"
-            aria-expanded="false"
-          >
-            Export
+        <div>
+          <button onClick={handleExportToPDF} className="btn btn-primary me-2">
+            Export to PDF
           </button>
-          <ul className="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-            <li>
-              <button className="dropdown-item" onClick={handleExportToPDF}>
-                Export to PDF
-              </button>
-            </li>
-            <li>
-              <button className="dropdown-item" onClick={handlePrint}>
-                Print
-              </button>
-            </li>
-          </ul>
+          <button onClick={handlePrint} className="btn btn-secondary">
+            Print
+          </button>
         </div>
       </div>
 
-      {/* Invoice Card */}
-      <div className="card">
-        <div className="card-body">
-          <h5 className="card-title">{invoice.to || 'N/A'}</h5>
+      {/* Invoice Content */}
+      <div
+        id="invoice-content"
+        style={{
+          backgroundColor: '#fff',
+          padding: '20px',
+          borderRadius: '10px',
+          boxShadow: '0px 0px 15px rgba(0, 0, 0, 0.2)',
+        }}
+      >
+        <div className="mb-4">
+          {/* Company Details */}
+          <div className="d-flex justify-content-between align-items-center">
+            {profile.logo && (
+              <img
+                src={profile.logo}
+                alt="Company Logo"
+                style={{ maxWidth: '100px' }}
+              />
+            )}
+            <div className="text-end">
+              <h4>{profile.companyName || 'Company Name'}</h4>
+              <p>{profile.email || 'Email Address'}</p>
+              <p>{profile.phone || 'Phone Number'}</p>
+              <p>{profile.address || 'Address'}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Invoice Details */}
+        <div className="mb-4">
+          <h5>Invoice To:</h5>
+          <p>
+            <strong>Name:</strong> {invoice.to || 'N/A'}
+          </p>
           <p>
             <strong>Phone:</strong> {invoice.phone || 'N/A'}
           </p>
@@ -85,36 +129,39 @@ const InvoiceDetails = () => {
               ? new Date(invoice.date.seconds * 1000).toLocaleDateString()
               : 'N/A'}
           </p>
-
-          {/* Product List */}
-          <h6 className="mt-4">Products:</h6>
-          {invoice.product.length > 0 ? (
-            <ul className="list-group">
-              {invoice.product.map((item, index) => (
-                <li
-                  className="list-group-item d-flex justify-content-between align-items-center"
-                  key={index}
-                >
-                  {item.name} (x{item.qty})
-                  <span>${item.totalPrice.toFixed(2)}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p>No products available for this invoice.</p>
-          )}
-          <h5 className="mt-4">Total: ${invoice.total.toFixed(2)}</h5>
         </div>
-      </div>
 
-      {/* Action Buttons */}
-      <div className="d-flex justify-content-between mt-4">
-        <button className="btn btn-warning" onClick={handleEdit}>
-          <i className="fa-solid fa-pen"></i> Edit
-        </button>
-        <button className="btn btn-danger" onClick={handleDelete}>
-          <i className="fa-solid fa-trash"></i> Delete
-        </button>
+        {/* Product List */}
+        <div className="mb-4">
+          <h5>Products:</h5>
+          <table className="table table-bordered">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Product Name</th>
+                <th>Quantity</th>
+                <th>Price</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {invoice.product.map((item, index) => (
+                <tr key={index}>
+                  <td>{index + 1}</td>
+                  <td>{item.name}</td>
+                  <td>{item.qty}</td>
+                  <td>${item.price.toFixed(2)}</td>
+                  <td>${(item.qty * item.price).toFixed(2)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        
+        <div className="text-end">
+          <h5>Total: ${invoice.total.toFixed(2)}</h5>
+        </div>
       </div>
     </div>
   );

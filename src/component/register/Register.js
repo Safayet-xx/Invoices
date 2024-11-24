@@ -11,12 +11,19 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [imageUrl, setImageUrl] = useState('');
+  const [isUploading, setUploading] = useState(false);
   const [isLoading, setLoading] = useState(false);
 
   const navigate = useNavigate();
 
   const submitHandler = async (e) => {
     e.preventDefault();
+
+    if (!imageUrl) {
+      alert('Please wait for the image to upload before submitting.');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -26,7 +33,7 @@ const Register = () => {
       // Update user profile in Firebase Auth
       await updateProfile(newUser.user, {
         displayName: displayName,
-        photoURL: imageUrl, // Assign the uploaded image URL to the profile
+        photoURL: imageUrl,
       });
 
       // Save user data in Firestore
@@ -34,18 +41,18 @@ const Register = () => {
         uid: newUser.user.uid,
         displayName: displayName,
         email: email,
-        photoURL: imageUrl, // Save image URL to Firestore
+        photoURL: imageUrl,
       });
 
-      // Navigate to dashboard and save user info in localStorage
-      navigate('/dashboard');
+      // Save user info in localStorage
       localStorage.setItem('cName', displayName);
       localStorage.setItem('email', newUser.user.email);
       localStorage.setItem('uid', newUser.user.uid);
 
-      setLoading(false);
+      navigate('/dashboard');
     } catch (error) {
       console.error('Error during registration:', error);
+    } finally {
       setLoading(false);
     }
   };
@@ -53,10 +60,13 @@ const Register = () => {
   const onUploadSuccess = (response) => {
     console.log('Image uploaded successfully:', response.url);
     setImageUrl(response.url); // Save the uploaded image URL to state
+    setUploading(false);
   };
 
   const onUploadError = (error) => {
     console.error('Error uploading image:', error);
+    setUploading(false);
+    alert('Failed to upload image. Please try again.');
   };
 
   return (
@@ -92,7 +102,7 @@ const Register = () => {
             <IKContext
               publicKey="public_oqQgn8KlbR4og8xmzwk+UIoAKYY="
               urlEndpoint="https://ik.imagekit.io/ant9lfnrk"
-              authenticationEndpoint="http://localhost:3000/imagekit/auth" // Update with your actual endpoint
+              authenticationEndpoint="http://localhost:3000/auth"
             >
               <label htmlFor="fileUpload" className="login-input">
                 Upload Your Logo:
@@ -101,12 +111,13 @@ const Register = () => {
                 fileName="logo-upload"
                 onSuccess={onUploadSuccess}
                 onError={onUploadError}
-                className="upload-btn" // Add custom styling if needed
+                className="upload-btn"
               />
+              {isUploading && <p>Uploading image...</p>}
             </IKContext>
 
-            <button className="login-input login-btn" type="submit">
-              {isLoading && <i className="fa-solid fa-spinner fa-spin-pulse"></i>} Submit
+            <button className="login-input login-btn" type="submit" disabled={isLoading || isUploading}>
+              {isLoading ? <i className="fa-solid fa-spinner fa-spin-pulse"></i> : 'Submit'}
             </button>
           </form>
           <Link to="/login" className="register-link">
