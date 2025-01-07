@@ -4,14 +4,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import { auth, db } from '../../firebase';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
-import { IKContext, IKUpload } from 'imagekitio-react';
 
 const Register = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [repeatPassword, setRepeatPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
-  const [isUploading, setUploading] = useState(false);
+  const [companyAddress, setCompanyAddress] = useState('');
+  const [contactNo, setContactNo] = useState('');
   const [isLoading, setLoading] = useState(false);
 
   const navigate = useNavigate();
@@ -19,8 +19,9 @@ const Register = () => {
   const submitHandler = async (e) => {
     e.preventDefault();
 
-    if (!imageUrl) {
-      alert('Please wait for the image to upload before submitting.');
+    // Check if passwords match
+    if (password !== repeatPassword) {
+      alert("Passwords don't match.");
       return;
     }
 
@@ -33,7 +34,6 @@ const Register = () => {
       // Update user profile in Firebase Auth
       await updateProfile(newUser.user, {
         displayName: displayName,
-        photoURL: imageUrl,
       });
 
       // Save user data in Firestore
@@ -41,7 +41,8 @@ const Register = () => {
         uid: newUser.user.uid,
         displayName: displayName,
         email: email,
-        photoURL: imageUrl,
+        companyAddress: companyAddress,
+        contactNo: contactNo,
       });
 
       // Save user info in localStorage
@@ -49,24 +50,13 @@ const Register = () => {
       localStorage.setItem('email', newUser.user.email);
       localStorage.setItem('uid', newUser.user.uid);
 
-      navigate('/dashboard');
+      // Redirect to the Profile page
+      navigate('/dashboard/profile');
     } catch (error) {
       console.error('Error during registration:', error);
     } finally {
       setLoading(false);
     }
-  };
-
-  const onUploadSuccess = (response) => {
-    console.log('Image uploaded successfully:', response.url);
-    setImageUrl(response.url); // Save the uploaded image URL to state
-    setUploading(false);
-  };
-
-  const onUploadError = (error) => {
-    console.error('Error uploading image:', error);
-    setUploading(false);
-    alert('Failed to upload image. Please try again.');
   };
 
   return (
@@ -92,31 +82,34 @@ const Register = () => {
             />
             <input
               required
+              onChange={(e) => setCompanyAddress(e.target.value)}
+              className="login-input"
+              type="text"
+              placeholder="Company Address"
+            />
+            <input
+              required
+              onChange={(e) => setContactNo(e.target.value)}
+              className="login-input"
+              type="text"
+              placeholder="Contact No."
+            />
+            <input
+              required
               onChange={(e) => setPassword(e.target.value)}
               className="login-input"
               type="password"
               placeholder="Password"
             />
+            <input
+              required
+              onChange={(e) => setRepeatPassword(e.target.value)}
+              className="login-input"
+              type="password"
+              placeholder="Repeat Password"
+            />
 
-            {/* ImageKit Upload Component */}
-            <IKContext
-              publicKey="public_oqQgn8KlbR4og8xmzwk+UIoAKYY="
-              urlEndpoint="https://ik.imagekit.io/ant9lfnrk"
-              authenticationEndpoint="http://localhost:3000/auth"
-            >
-              <label htmlFor="fileUpload" className="login-input">
-                Upload Your Logo:
-              </label>
-              <IKUpload
-                fileName="logo-upload"
-                onSuccess={onUploadSuccess}
-                onError={onUploadError}
-                className="upload-btn"
-              />
-              {isUploading && <p>Uploading image...</p>}
-            </IKContext>
-
-            <button className="login-input login-btn" type="submit" disabled={isLoading || isUploading}>
+            <button className="login-input login-btn" type="submit" disabled={isLoading}>
               {isLoading ? <i className="fa-solid fa-spinner fa-spin-pulse"></i> : 'Submit'}
             </button>
           </form>

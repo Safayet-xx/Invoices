@@ -1,172 +1,203 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { db } from '../../firebase'; // Firestore instance
+import { collection, doc, getDoc, setDoc } from 'firebase/firestore';
+import axios from 'axios'; // For Cloudinary image upload
 import './Profile.css';
 
-const Profile = () => {
-  const [companyName, setCompanyName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [address, setAddress] = useState('');
-  const [logo, setLogo] = useState('');
-  const [isEditMode, setIsEditMode] = useState(true); // Toggles between edit and view mode
+const Profile = ({ userId }) => {
+  const [formData, setFormData] = useState({
+    companyName: '',
+    email: '',
+    phone: '',
+    address: '',
+    logo: '', // Holds the Cloudinary URL
+  });
+  const [errors, setErrors] = useState({});
+  const [isUploading, setIsUploading] = useState(false); // Tracks upload status
+  const navigate = useNavigate();
 
-  // Load data from localStorage on component mount
+  const profileCollection = collection(db, 'profiles');
+
+  // Fetch the user's profile data from Firestore
   useEffect(() => {
-    const storedCompanyName = localStorage.getItem('cName');
-    const storedEmail = localStorage.getItem('email');
-    const storedLogo = localStorage.getItem('photoURL'); // Assuming logo URL is saved in registration
-    if (storedCompanyName) setCompanyName(storedCompanyName);
-    if (storedEmail) setEmail(storedEmail);
-    if (storedLogo) setLogo(storedLogo);
-  }, []);
+    if (userId) {
+      const fetchProfile = async () => {
+        try {
+          const profileRef = doc(profileCollection, userId);
+          const profileSnap = await getDoc(profileRef);
+          if (profileSnap.exists()) {
+            setFormData(profileSnap.data());
+          }
+        } catch (error) {
+          console.error('Error fetching profile:', error);
+        }
+      };
+      fetchProfile();
+    }
+  }, [userId]);
 
-  const handleSave = () => {
-    // Save data locally or send to the backend
-    localStorage.setItem('phone', phone);
-    localStorage.setItem('address', address);
-    setIsEditMode(false); // Switch to view mode
-    alert('Profile saved successfully!');
+  // Validate the form inputs
+  const validateForm = () => {
+    const newErrors = {};
+    const { companyName, email, phone, address, logo } = formData;
+
+    if (!companyName.trim()) newErrors.companyName = 'Company Name is required.';
+    if (!email.trim()) {
+      newErrors.email = 'Email is required.';
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = 'Invalid email address.';
+    }
+    if (!phone.trim()) {
+      newErrors.phone = 'Phone Number is required.';
+    } else if (!/^\d+$/.test(phone)) {
+      newErrors.phone = 'Phone Number must contain only digits.';
+    }
+    if (!address.trim()) newErrors.address = 'Address is required.';
+    if (!logo.trim()) newErrors.logo = 'Company Logo is required.';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
-  const handleEdit = () => {
-    setIsEditMode(true); // Switch back to edit mode
+  // Save profile data to Firestore
+  const handleSave = async () => {
+    if (isUploading) {
+      alert('Please wait for the image to finish uploading.');
+      return;
+    }
+
+    if (validateForm()) {
+      try {
+        const profileRef = doc(profileCollection, userId);
+        await setDoc(profileRef, formData);
+        alert('Profile saved successfully!');
+        setErrors({});
+        navigate('/dashboard/home');
+      } catch (error) {
+        console.error('Error saving profile:', error);
+        alert('Failed to save profile. Please try again.');
+      }
+    } else {
+      alert('Please fill in all required fields correctly.');
+    }
   };
 
-  const handleLogoChange = (e) => {
+  // Handle input changes
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Handle logo upload to Cloudinary
+  const handleLogoChange = async (e) => {
     const file = e.target.files[0];
-    setLogo(URL.createObjectURL(file));
-    // Save logo to localStorage or backend
+    if (file) {
+      setIsUploading(true); // Set uploading status
+      const uploadData = new FormData();
+      uploadData.append('file', file);
+      uploadData.append('upload_preset', 'x0r1d81e'); // Replace with your Cloudinary upload preset
+
+      try {
+        const res = await axios.post(
+          'https://api.cloudinary.com/v1_1/dpqs8cobk/image/upload', // Replace with your Cloudinary URL
+          uploadData
+        );
+        const logoUrl = res.data.secure_url;
+
+        // Update the formData with the uploaded logo URL
+        setFormData((prev) => ({ ...prev, logo: logoUrl }));
+
+        console.log('Uploaded logo URL:', logoUrl); // Debugging log
+      } catch (error) {
+        console.error('Error uploading logo:', error);
+        alert('Failed to upload logo. Please try again.');
+      } finally {
+        setIsUploading(false); // Reset uploading status
+      }
+    }
   };
 
   return (
     <div className="container my-5">
-      <div className="card">
-        <div className="card-header bg-primary text-white">
-          <h3>Company Profile</h3>
+      <h2 className="mb-4">Profile</h2>
+      <form>
+        <div className="form-group mb-3">
+          <label htmlFor="companyName">Company Name</label>
+          <input
+            type="text"
+            id="companyName"
+            name="companyName"
+            className="form-control"
+            value={formData.companyName}
+            onChange={handleChange}
+          />
+          {errors.companyName && <small className="text-danger">{errors.companyName}</small>}
         </div>
-        <div className="card-body">
-          {isEditMode ? (
-            <form>
-              <div className="mb-3">
-                <label htmlFor="companyName" className="form-label">
-                  Company Name
-                </label>
-                <input
-                  type="text"
-                  className="form-control"
-                  id="companyName"
-                  value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
-                  disabled // Company Name is fetched from registration and not editable
-                />
-              </div>
-
-              <div className="mb-3">
-                <label htmlFor="email" className="form-label">
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  className="form-control"
-                  id="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled // Email is fetched from registration and not editable
-                />
-              </div>
-
-              <div className="mb-3">
-                <label htmlFor="phone" className="form-label">
-                  Phone Number
-                </label>
-                <input
-                  type="tel"
-                  className="form-control"
-                  id="phone"
-                  placeholder="Enter your company phone number"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="mb-3">
-                <label htmlFor="address" className="form-label">
-                  Company Address
-                </label>
-                <textarea
-                  className="form-control"
-                  id="address"
-                  rows="3"
-                  placeholder="Enter your company address"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="mb-3">
-                <label htmlFor="logo" className="form-label">
-                  Company Logo
-                </label>
-                <input
-                  type="file"
-                  className="form-control"
-                  id="logo"
-                  accept="image/*"
-                  onChange={handleLogoChange}
-                />
-                {logo && (
-                  <div className="mt-3">
-                    <p>Selected Logo:</p>
-                    <img
-                      src={logo}
-                      alt="Company Logo"
-                      className="logo-preview"
-                      style={{ maxWidth: '150px' }}
-                    />
-                  </div>
-                )}
-              </div>
-
-              <button type="button" className="btn btn-success" onClick={handleSave}>
-                Save Profile
-              </button>
-            </form>
-          ) : (
-            <div>
-              <p>
-                <strong>Company Name:</strong> {companyName}
-              </p>
-              <p>
-                <strong>Email:</strong> {email}
-              </p>
-              <p>
-                <strong>Phone Number:</strong> {phone || 'N/A'}
-              </p>
-              <p>
-                <strong>Address:</strong> {address || 'N/A'}
-              </p>
-              {logo && (
-                <div>
-                  <strong>Company Logo:</strong>
-                  <div>
-                    <img
-                      src={logo}
-                      alt="Company Logo"
-                      className="logo-preview"
-                      style={{ maxWidth: '150px' }}
-                    />
-                  </div>
-                </div>
-              )}
-
-              <button type="button" className="btn btn-primary mt-3" onClick={handleEdit}>
-                Edit Profile
-              </button>
-            </div>
+        <div className="form-group mb-3">
+          <label htmlFor="email">Email</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            className="form-control"
+            value={formData.email}
+            onChange={handleChange}
+          />
+          {errors.email && <small className="text-danger">{errors.email}</small>}
+        </div>
+        <div className="form-group mb-3">
+          <label htmlFor="phone">Phone Number</label>
+          <input
+            type="text"
+            id="phone"
+            name="phone"
+            className="form-control"
+            value={formData.phone}
+            onChange={handleChange}
+          />
+          {errors.phone && <small className="text-danger">{errors.phone}</small>}
+        </div>
+        <div className="form-group mb-3">
+          <label htmlFor="address">Address</label>
+          <input
+            type="text"
+            id="address"
+            name="address"
+            className="form-control"
+            value={formData.address}
+            onChange={handleChange}
+          />
+          {errors.address && <small className="text-danger">{errors.address}</small>}
+        </div>
+        <div className="form-group mb-3">
+          <label htmlFor="logo">Company Logo</label>
+          <input
+            type="file"
+            id="logo"
+            className="form-control"
+            onChange={handleLogoChange}
+          />
+          {isUploading && <small className="text-info">Uploading logo...</small>}
+          {errors.logo && <small className="text-danger">{errors.logo}</small>}
+          {formData.logo && (
+            <img
+              src={formData.logo}
+              alt="Company Logo"
+              className="mt-3"
+              style={{ width: '100px' }}
+            />
           )}
         </div>
-      </div>
+        <button
+          type="button"
+          className="btn btn-success"
+          onClick={handleSave}
+          disabled={isUploading}
+        >
+          {isUploading ? 'Uploading...' : 'Save Profile'}
+        </button>
+      </form>
     </div>
   );
 };

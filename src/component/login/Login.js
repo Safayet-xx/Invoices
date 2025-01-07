@@ -18,20 +18,18 @@ const Login = () => {
     setError(null); // Clear any previous errors
 
     try {
+      // Authenticate the user
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Example: Fetch media URL from your storage or media service
-      const mediaUrl = user.photoURL || 'https://ik.imagekit.io/ant9lfnrk/default-profile.jpg';
-
       // Save user details to localStorage
       localStorage.setItem('cName', user.displayName || 'Anonymous');
-      localStorage.setItem('photoURL', mediaUrl);
+      localStorage.setItem('photoURL', user.photoURL || 'https://ik.imagekit.io/ant9lfnrk/default-profile.jpg');
       localStorage.setItem('email', user.email);
       localStorage.setItem('phoneNumber', user.phoneNumber || '');
       localStorage.setItem('uid', user.uid);
 
-      // Navigate to dashboard
+      // Redirect to dashboard
       navigate('/dashboard');
     } catch (error) {
       console.error('Login error:', error);
@@ -43,34 +41,37 @@ const Login = () => {
 
   return (
     <div className="login-wrapper">
+      {/* Background */}
+      <div className="login-background"></div>
+
+      {/* Login Form */}
       <div className="login-container">
-        <div className="login-boxes login-left"></div>
-        <div className="login-boxes login-right">
-          <h2 className="login-heading">Login</h2>
-          <form onSubmit={submitHandler}>
-            <input
-              required
-              onChange={(e) => setEmail(e.target.value)}
-              className="login-input"
-              type="text"
-              placeholder="Email"
-            />
-            <input
-              required
-              onChange={(e) => setPassword(e.target.value)}
-              className="login-input"
-              type="password"
-              placeholder="Password"
-            />
-            {error && <p className="error-message">{error}</p>}
-            <button className="login-input login-btn" type="submit">
-              {isLoading ? <i className="fa-solid fa-spinner fa-spin-pulse"></i> : 'Submit'}
-            </button>
-          </form>
-          <Link to="/register" className="register-link">
-            Create an Account
-          </Link>
-        </div>
+        <h2 className="login-heading">Login</h2>
+        <form onSubmit={submitHandler}>
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="login-input"
+            required
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="login-input"
+            required
+          />
+          {error && <p className="error-message">{error}</p>}
+          <button type="submit" className="login-btn">
+            {isLoading ? <i className="fa-solid fa-spinner fa-spin"></i> : 'Submit'}
+          </button>
+        </form>
+        <Link to="/register" className="register-link">
+          Create an Account
+        </Link>
       </div>
     </div>
   );

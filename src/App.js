@@ -1,4 +1,4 @@
-import { RouterProvider, createBrowserRouter } from 'react-router-dom';
+import { RouterProvider, createBrowserRouter, Navigate } from 'react-router-dom';
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
@@ -12,24 +12,32 @@ import Setting from './component/dashboard/Setting';
 import InvoiceDetail from './component/dashboard/InvoiceDetail';
 import Profile from './component/dashboard/Profile';
 
+// Function to check if the profile is saved
+const isProfileSaved = () => {
+  return localStorage.getItem('profileSaved') === 'true';
+};
+
+// Route Guard for Protected Routes
+const ProtectedRoute = ({ children }) => {
+  return isProfileSaved() ? children : <Navigate to="/dashboard/profile" replace />;
+};
 
 function App() {
   const myRouter = createBrowserRouter([
-    { path: '', element: <Login /> },
+    { path: '/', element: <Navigate to="/login" replace /> }, // Redirect root path to login
     { path: '/login', element: <Login /> },
     { path: '/register', element: <Register /> },
     {
       path: '/dashboard',
       element: <Dashboard />,
       children: [
-        { path: '', element: <Home /> },
-        { path: 'home', element: <Home /> },
-        { path: 'invoices', element: <Invoices /> },
-        { path: 'new-invoice', element: <NewInvoice /> },
-        { path: 'invoice-detail', element: <InvoiceDetail /> }, // Added this route
-        { path: 'setting', element: <Setting /> },
-        { path: 'profile', element: <Profile /> },
-
+        { path: '', element: <Navigate to="profile" replace /> }, // Default route to profile
+        { path: 'home', element: <ProtectedRoute><Home /></ProtectedRoute> },
+        { path: 'invoices', element: <ProtectedRoute><Invoices /></ProtectedRoute> },
+        { path: 'new-invoice', element: <ProtectedRoute><NewInvoice /></ProtectedRoute> },
+        { path: 'invoice-detail', element: <ProtectedRoute><InvoiceDetail /></ProtectedRoute> },
+        { path: 'setting', element: <ProtectedRoute><Setting /></ProtectedRoute> },
+        { path: 'profile', element: <Profile /> }, // Accessible without protection
       ],
     },
   ]);
